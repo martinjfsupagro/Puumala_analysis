@@ -23,10 +23,10 @@ sample.names <- sapply(strsplit(basename(fnFs), "_"), `[`, 1)
 ```
 
 ```{r}
-plotQualityProfile(fnFs[1:2])
+plotQualityProfile(fnFs[1:6])
 ```
 ```{r}
-plotQualityProfile(fnRs[1:2])
+plotQualityProfile(fnRs[1:6])
 ```
 ```{r}
 # Place filtered files in filtered/ subdirectory
@@ -58,11 +58,11 @@ names(derepRs) <- sample.names
 ```
 
 ```{r}
-dadaFs <- dada(derepFs, err=errF, multithread=TRUE)
+dadaFs <- dada(derepFs, err=errF, multithread=FALSE)
 ```
 
 ```{r}
-dadaRs <- dada(derepRs, err=errR, multithread=TRUE)
+dadaRs <- dada(derepRs, err=errR, multithread=FALSE)
 ```
 
 ```{r}
@@ -72,7 +72,7 @@ dadaFs[[1]]
 ```{r}
 mergers <- mergePairs(dadaFs, derepFs, dadaRs, derepRs, verbose=TRUE)
 # Inspect the merger data.frame from the first sample
-head(mergers[[1]])
+
 ```
 ```{r}
 seqtab <- makeSequenceTable(mergers)
@@ -85,7 +85,7 @@ table(nchar(getSequences(seqtab)))
 ```
 
 ```{r}
-seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
+seqtab.nochim <- removeBimeraDenovo(seqtab, method="per-sample", multithread=FALSE, verbose=TRUE)
 dim(seqtab.nochim)
 ```
 
@@ -98,8 +98,8 @@ sum(seqtab.nochim)/sum(seqtab)
 # Assumes seqtab_nochim is your sequence table of merged sequences
 seqlens <- nchar(getSequences(seqtab.nochim))
 plot(sort(seqlens))
-MINLEN <- 230
-MAXLEN <- 240
+MINLEN <- 0
+MAXLEN <- 500
 seqtab.nochim.length_filt <- seqtab.nochim[,seqlens >= MINLEN & seqlens <= MAXLEN]
 dim(seqtab.nochim.length_filt)
 seqlens_filt <- nchar(getSequences(seqtab.nochim.length_filt))
