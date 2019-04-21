@@ -15,6 +15,104 @@ list.files(path)
 ```
 
 ```{r}
+# Forward and reverse fastq filenames have format: SAMPLENAME_R1_001.fastq and SAMPLENAME_R2_001.fastq
+fnFs <- sort(list.files(path, pattern="_R1_001.fastq.gz", full.names = TRUE))
+fnRs <- sort(list.files(path, pattern="_R2_001.fastq.gz", full.names = TRUE))
+# Extract sample names, assuming filenames have format: SAMPLENAME_XXX.fastq.gz
+sample.names <- sapply(strsplit(basename(fnFs), "_"), `[`, 1)
+```
+
+```{r}
+plotQualityProfile(fnFs[1:2])
+```
+```{r}
+plotQualityProfile(fnRs[1:2])
+```
+```{r}
+# Place filtered files in filtered/ subdirectory
+filtFs <- file.path(path, "filtered", paste0(sample.names, "_F_filt.fastq.gz"))
+filtRs <- file.path(path, "filtered", paste0(sample.names, "_R_filt.fastq.gz"))
+```
+
+```{r}
+out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, truncLen=c(140,140), maxN=0, rm.phix=TRUE, compress=TRUE, multithread=FALSE) # On Windows set multithread=FALSE
+out
+```
+
+```{r}
+errF <- learnErrors(filtFs, multithread=TRUE)
+```
+
+```{r}
+errR <- learnErrors(filtRs, multithread=TRUE)
+```
+```{r}
+plotErrors(errF, nominalQ=TRUE)
+```
+```{r}
+derepFs <- derepFastq(filtFs, verbose=TRUE)
+derepRs <- derepFastq(filtRs, verbose=TRUE)
+# Name the derep-class objects by the sample names
+names(derepFs) <- sample.names
+names(derepRs) <- sample.names
+```
+
+```{r}
+dadaFs <- dada(derepFs, err=errF, multithread=TRUE)
+```
+
+```{r}
+dadaRs <- dada(derepRs, err=errR, multithread=TRUE)
+```
+
+```{r}
+dadaFs[[1]]
+```
+
+```{r}
+mergers <- mergePairs(dadaFs, derepFs, dadaRs, derepRs, verbose=TRUE)
+# Inspect the merger data.frame from the first sample
+head(mergers[[1]])
+```
+```{r}
+seqtab <- makeSequenceTable(mergers)
+dim(seqtab)
+```
+
+```{r}
+# Inspect distribution of sequence lengths
+table(nchar(getSequences(seqtab)))
+```
+
+```{r}
+seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
+dim(seqtab.nochim)
+```
+
+```{r}
+sum(seqtab.nochim)/sum(seqtab)
+
+```
+
+```{r}
+# Assumes seqtab_nochim is your sequence table of merged sequences
+seqlens <- nchar(getSequences(seqtab.nochim))
+plot(sort(seqlens))
+MINLEN <- 230
+MAXLEN <- 240
+seqtab.nochim.length_filt <- seqtab.nochim[,seqlens >= MINLEN & seqlens <= MAXLEN]
+dim(seqtab.nochim.length_filt)
+seqlens_filt <- nchar(getSequences(seqtab.nochim.length_filt))
+plot(sort(seqlens_filt))
+
+abundances <- colSums(seqtab.nochim.length_filt)
+plot(sort(abundances))
+MINABUND <- 1
+seqtab.nochim.length_abundance_filt <- seqtab.nochim.length_filt[,abundances >= MINABUND]
+dim(seqtab.nochim.length_abundance_filt)
+asvs.table <- seqtab.nochim.length_abundance_filt
+saveRDS(asvs.table, "./asvs_table.rds") # CHANGE ME to where you want sequence table saved
+uniquesToFasta(asvs.table, fout="asvs.fasta")
 
 ```
 
