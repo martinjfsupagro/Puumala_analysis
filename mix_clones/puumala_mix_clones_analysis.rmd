@@ -11,7 +11,7 @@ library(dada2); packageVersion("dada2")
 
 ```{r}
 path <- setwd("C:/Users/martinjf/Desktop/Travail/Recherche/Projets/Guillaume -puumala/Puumala_analysis/mix_clones/")
-list.files(path)
+list.files(path, pattern="*.fastq.gz")
 ```
 
 ```{r}
@@ -71,28 +71,28 @@ dadaFs[[1]]
 
 ```{r}
 mergers <- mergePairs(dadaFs, derepFs, dadaRs, derepRs, verbose=TRUE)
-# Inspect the merger data.frame from the first sample
-
 ```
 ```{r}
 seqtab <- makeSequenceTable(mergers)
 dim(seqtab)
 ```
+There is a total of 4 variants in the 6 samples
 
 ```{r}
 # Inspect distribution of sequence lengths
 table(nchar(getSequences(seqtab)))
 ```
-
+The size of all 4 variants is 236 bases
 ```{r}
 seqtab.nochim <- removeBimeraDenovo(seqtab, method="per-sample", multithread=FALSE, verbose=TRUE)
 dim(seqtab.nochim)
 ```
-
+No chimera was detected with the "per-sample" algorithm.
 ```{r}
 sum(seqtab.nochim)/sum(seqtab)
 
 ```
+100% of the variants were therefore kept for further analysis
 
 ```{r}
 # Assumes seqtab_nochim is your sequence table of merged sequences
@@ -114,5 +114,14 @@ asvs.table <- seqtab.nochim.length_abundance_filt
 saveRDS(asvs.table, "./asvs_table.rds") # CHANGE ME to where you want sequence table saved
 uniquesToFasta(asvs.table, fout="asvs.fasta")
 
+```
+
+```{r}
+getN <- function(x) sum(getUniques(x))
+track <- cbind(out, sapply(dadaFs, getN), sapply(dadaRs, getN), sapply(mergers, getN), rowSums(seqtab.nochim))
+# If processing a single sample, remove the sapply calls: e.g. replace sapply(dadaFs, getN) with getN(dadaFs)
+colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim")
+rownames(track) <- sample.names
+track
 ```
 
