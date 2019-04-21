@@ -1,0 +1,20 @@
+---
+title: "R analysis of Puumala project, clones mix"
+output: html_notebook
+---
+
+
+
+```{r}
+library(dada2); packageVersion("dada2")
+```
+
+```{r}
+path <- setwd("C:/Users/martinjf/Desktop/Travail/Recherche/Projets/Guillaume -puumala/Puumala_analysis/mix_clones/")
+list.files(path)
+```
+
+```{r}
+
+```
+
