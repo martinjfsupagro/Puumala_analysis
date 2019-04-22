@@ -1,6 +1,8 @@
 ---
 title: "R analysis of Puumala project, clones mix"
-output: html_notebook
+output:
+  pdf_document: default
+  html_notebook: default
 ---
 
 
