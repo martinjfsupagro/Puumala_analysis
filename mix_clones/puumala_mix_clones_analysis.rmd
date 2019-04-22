@@ -123,5 +123,6 @@ track <- cbind(out, sapply(dadaFs, getN), sapply(dadaRs, getN), sapply(mergers, 
 colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim")
 rownames(track) <- sample.names
 track
+write.csv(seqtab.nochim.length_abundance_filt, file = "asvs.csv")
 ```
 
